@@ -1,4 +1,4 @@
-module github.com/ziporah/terraform-provider-gitea
+module github.com/benosman/terraform-provider-gitea
 
 require (
 	code.gitea.io/sdk v0.0.0-20190208103852-600c19aa03dc

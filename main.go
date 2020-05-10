@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/benosman/terraform-provider-gitea/gitea"
 	"github.com/hashicorp/terraform/plugin"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/ziporah/terraform-provider-gitea/gitea"
 )
 
 func main() {

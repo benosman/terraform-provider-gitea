@@ -49,6 +49,10 @@ func dataSourceGiteaOrganizations() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
+						"visibility": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
 					},
 				},
 			},
@@ -93,6 +97,7 @@ func flattenGiteaOrganizations(orgs []*giteaapi.Organization) []interface{} {
 			"description": organization.Description,
 			"website":     organization.Website,
 			"location":    organization.Location,
+			"visibility":  organization.Visibility,
 		}
 
 		organizationsList = append(organizationsList, values)

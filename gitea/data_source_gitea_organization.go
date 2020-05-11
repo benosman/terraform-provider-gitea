@@ -37,6 +37,10 @@ func dataSourceGiteaOrganization() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"visibility": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -58,5 +62,6 @@ func dataSourceGiteaOrganizationRead(d *schema.ResourceData, meta interface{}) e
 	d.Set("description", org.Description)
 	d.Set("website", org.Website)
 	d.Set("location", org.Location)
+	d.Set("visibility", org.Visibility)
 	return nil
 }

@@ -2,6 +2,7 @@ package gitea
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform/helper/validation"
 	"log"
 	"strings"
 
@@ -19,22 +20,28 @@ func resourceGiteaOrganization() *schema.Resource {
 			State: resourceGiteaOrganizationImportState,
 		},
 		Schema: map[string]*schema.Schema{
-			"owner": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"username": {
+			"full_name": {
 				Type:     schema.TypeString,
-				Required: true,
-			},
-			"fullname": {
-				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+			"location": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"visibility": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{"public", "limited", "private"}, false),
 			},
 			"website": {
 				Type:     schema.TypeString,
@@ -45,10 +52,10 @@ func resourceGiteaOrganization() *schema.Resource {
 }
 
 func resourceGiteaOrganizationSetToState(d *schema.ResourceData, org *giteaapi.Organization) error {
-	if err := d.Set("username", org.UserName); err != nil {
+	if err := d.Set("name", org.UserName); err != nil {
 		return err
 	}
-	if err := d.Set("fullname", org.FullName); err != nil {
+	if err := d.Set("full_name", org.FullName); err != nil {
 		return err
 	}
 	if err := d.Set("description", org.Description); err != nil {
@@ -62,32 +69,34 @@ func resourceGiteaOrganizationSetToState(d *schema.ResourceData, org *giteaapi.O
 
 func resourceGiteaOrganizationCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*giteaapi.Client)
-	owner := d.Get("owner").(string)
 	options := giteaapi.CreateOrgOption{
-		UserName:    d.Get("username").(string),
-		FullName:    d.Get("fullname").(string),
+		UserName:    d.Get("name").(string),
+		FullName:    d.Get("full_name").(string),
 		Description: d.Get("description").(string),
 		Website:     d.Get("website").(string),
+		Location:    d.Get("location").(string),
+		Visibility:  d.Get("visibility").(string),
 	}
 
-	log.Printf("[DEBUG] create user %q", options.UserName)
+	log.Printf("[DEBUG] create organisation %q", options.UserName)
 
-	org, err := client.AdminCreateOrg(owner, options)
+	org, err := client.CreateOrg(options)
+
 	if err != nil {
 		return fmt.Errorf("unable to create organization: %v", err)
 	}
 	log.Printf("[DEBUG] organization created: %v", org)
 	d.SetId(fmt.Sprintf("%d", org.ID))
-	return resourceGiteaUserRead(d, meta)
+	return resourceGiteaOrganizationRead(d, meta)
 }
 
 func resourceGiteaOrganizationRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*giteaapi.Client)
-	username := d.Get("username").(string)
-	log.Printf("[DEBUG] read organization %q %s", d.Id(), username)
-	org, err := client.GetOrg(username)
+	name := d.Get("name").(string)
+	log.Printf("[DEBUG] read organization %q %s", d.Id(), name)
+	org, err := client.GetOrg(name)
 	if err != nil {
-		return fmt.Errorf("unable to retrieve organization %s", username)
+		return fmt.Errorf("unable to retrieve organization %s", name)
 	}
 	log.Printf("[DEBUG] organization find: %v", org)
 	return resourceGiteaOrganizationSetToState(d, org)
@@ -95,23 +104,39 @@ func resourceGiteaOrganizationRead(d *schema.ResourceData, meta interface{}) err
 }
 
 func resourceGiteaOrganizationUpdate(d *schema.ResourceData, meta interface{}) error {
-	return nil
+	client := meta.(*giteaapi.Client)
+	log.Printf("[DEBUG] update organization %s", d.Id())
+
+	name := d.Get("name").(string)
+	edit := giteaapi.EditOrgOption{
+		FullName:    d.Get("full_name").(string),
+		Description: d.Get("description").(string),
+		Website:     d.Get("website").(string),
+		Location:    d.Get("location").(string),
+		Visibility:  d.Get("visibility").(string),
+	}
+	err := client.EditOrg(name, edit)
+	if err != nil {
+		return fmt.Errorf("unable to edit organization: %s", name)
+	}
+
+	return resourceGiteaOrganizationRead(d, meta)
 }
 
 func resourceGiteaOrganizationDelete(d *schema.ResourceData, meta interface{}) error {
-	// client := meta.(*giteaapi.Client)
-	// log.Printf("[DEBUG] delete organization %s", d.Id())
-	// return client.AdminDeleteOrganization(d.Get("username").(string))
-	return nil
+	client := meta.(*giteaapi.Client)
+	name := d.Get("name").(string)
+	log.Printf("[DEBUG] delete organization: %s", name)
+	return client.DeleteOrg(name)
 }
 
 func resourceGiteaOrganizationImportState(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	parts := strings.Split(d.Id(), "/")
 
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("Invalid import id %q. Expecting {id}/{username}", d.Id())
+		return nil, fmt.Errorf("Invalid import id %q. Expecting {id}/{name}", d.Id())
 	}
-	d.Set("username", parts[1])
+	_ = d.Set("name", parts[1])
 	d.SetId(parts[0])
 
 	return []*schema.ResourceData{d}, nil

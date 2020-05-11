@@ -216,7 +216,7 @@ func resourceGiteaRepositoryCreate(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return err
 	}
-	
+
 	log.Printf("[DEBUG] Repository finalized: %v", repository)
 	// Everything complete
 	d.Partial(false)
@@ -241,13 +241,23 @@ func resourceGiteaRepositoryUpdate(d *schema.ResourceData, meta interface{}) err
 	client := meta.(*giteaapi.Client)
 	owner := d.Get("owner").(string)
 	name := d.Get("name").(string)
+
+	if d.HasChange("owner") {
+		log.Printf("[DEBUG] change owner of repository %s to %s", d.Id(), owner)
+		return fmt.Errorf("[NOT IMPLEMENTED] unable to transfer repository %s %s", owner, name)
+		///_, err := client.TransferRepo
+		//if err != nil {
+			// return err
+		//}
+	}
+
 	log.Printf("[DEBUG] update repository %s", d.Id())
 
 	edit := resourceGiteaRepositoryEditOptions(d)
 
 	_, err := client.EditRepo(owner, name, edit)
 	if err != nil {
-		return fmt.Errorf("unable to edit organization: %s", name)
+		return err
 	}
 
 	return resourceGiteaRepositoryRead(d, meta)

@@ -207,12 +207,20 @@ func resourceGiteaRepositoryCreate(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Repository created: %v", repository)
+	log.Printf("[DEBUG] Repository created (partial): %v", repository)
 	d.SetId(fmt.Sprintf("%d", repository.ID))
 
+	log.Printf("[DEBUG] update repository %s", d.Id())
+	edit := resourceGiteaRepositoryEditOptions(d)
+	_, err = client.EditRepo(owner, options.Name, edit)
+	if err != nil {
+		return err
+	}
+	
+	log.Printf("[DEBUG] Repository finalized: %v", repository)
 	// Everything complete
 	d.Partial(false)
-	return nil
+	return resourceGiteaRepositoryRead(d, meta)
 }
 
 func resourceGiteaRepositoryRead(d *schema.ResourceData, meta interface{}) error {

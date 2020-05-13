@@ -3,6 +3,7 @@ package gitea
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	giteaapi "code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -30,6 +31,9 @@ func resourceGiteaRepository() *schema.Resource {
 		Read:   resourceGiteaRepositoryRead,
 		Update: resourceGiteaRepositoryUpdate,
 		Delete: resourceGiteaRepositoryDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourceGiteaRepositoryImportState,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"owner": &schema.Schema{
@@ -269,4 +273,26 @@ func resourceGiteaRepositoryDelete(d *schema.ResourceData, meta interface{}) err
 	name := d.Get("name").(string)
 	log.Printf("[DEBUG] delete repository: %s %s", owner, name)
 	return client.DeleteRepo(owner, name)
+}
+
+func resourceGiteaRepositoryImportState(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	parts := strings.Split(d.Id(), "/")
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("Invalid import id %q. Expecting {owner}/{name}", d.Id())
+	}
+
+	client := meta.(*giteaapi.Client)
+	owner := parts[0]
+	name := parts[1]
+	repo, err := client.GetRepo(owner, name)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve repository %s %s", owner, name)
+	}
+
+	d.SetId(fmt.Sprintf("%d", repo.ID))
+	resourceGiteaRepositorySetToState(d, repo)
+	
+	return []*schema.ResourceData{d}, nil
 }

@@ -36,11 +36,12 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"gitea_organization": resourceGiteaOrganization(),
-			"gitea_user":         resourceGiteaUser(),
-			"gitea_repository":   resourceGiteaRepository(),
-			"gitea_label":        resourceGiteaLabel(),
-			"gitea_milestone":    resourceGiteaMilestone(),
+			"gitea_organization":    resourceGiteaOrganization(),
+			"gitea_user":            resourceGiteaUser(),
+			"gitea_repository":      resourceGiteaRepository(),
+			"gitea_repository_hook": resourceGiteaRepositoryHook(),
+			"gitea_label":           resourceGiteaLabel(),
+			"gitea_milestone":       resourceGiteaMilestone(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"gitea_user":          dataSourceGiteaUser(),

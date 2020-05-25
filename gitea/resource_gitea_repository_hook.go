@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	giteaapi "code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -16,7 +17,7 @@ func resourceGiteaRepositoryHook() *schema.Resource {
 		Update: resourceGiteaRepositoryHookUpdate,
 		Delete: resourceGiteaRepositoryHookDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourceGiteaRepositoryHookImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"owner": &schema.Schema{
@@ -226,4 +227,33 @@ func resourceGiteaRepositoryHookUpdateObject(d *schema.ResourceData) (giteaapi.E
 	}
 
 	return hook, nil
+}
+
+func resourceGiteaRepositoryHookImportState(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	parts := strings.Split(d.Id(), "/")
+
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("Invalid import id %q. Expecting {owner}/{repo}/{id}", d.Id())
+	}
+
+	client := meta.(*giteaapi.Client)
+	owner := parts[0]
+	repo := parts[1]
+	hookId, err := strconv.ParseInt(parts[2], 10, 64)
+	if err != nil {
+		return nil, unconvertibleIdErr(parts[2], err)
+	}
+
+	hook, err := client.GetRepoHook(owner, repo, hookId)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve repository hook %s %s %d", owner, hook, hookId)
+	}
+
+	d.Set("owner", owner)
+	d.Set("repository", repo)
+	d.Set("url", hook.URL)
+	d.SetId(fmt.Sprintf("%d", hookId))
+	err = resourceGiteaRepositoryHookSetToState(d, hook)
+	return []*schema.ResourceData{d}, err
 }

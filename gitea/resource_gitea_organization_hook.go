@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	giteaapi "code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -16,7 +17,7 @@ func resourceGiteaOrganizationHook() *schema.Resource {
 		Update: resourceGiteaOrganizationHookUpdate,
 		Delete: resourceGiteaOrganizationHookDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourceGiteaOrganizationHookImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"organization": &schema.Schema{
@@ -218,4 +219,31 @@ func resourceGiteaOrganizationHookUpdateObject(d *schema.ResourceData) (giteaapi
 	}
 
 	return hook, nil
+}
+
+func resourceGiteaOrganizationHookImportState(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	parts := strings.Split(d.Id(), "/")
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("Invalid import id %q. Expecting {org}/{id}", d.Id())
+	}
+
+	client := meta.(*giteaapi.Client)
+	org := parts[0]
+	hookId, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return nil, unconvertibleIdErr(parts[1], err)
+	}
+
+	hook, err := client.GetOrgHook(org, hookId)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve organization hook %s %s %d", org, hook, hookId)
+	}
+
+	d.Set("organization", org)
+	d.Set("url", hook.URL)
+	d.SetId(fmt.Sprintf("%d", hookId))
+	err = resourceGiteaOrganizationHookSetToState(d, hook)
+	return []*schema.ResourceData{d}, err
 }

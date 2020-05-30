@@ -47,6 +47,7 @@ func Provider() terraform.ResourceProvider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"gitea_user":              dataSourceGiteaUser(),
 			"gitea_repository":        dataSourceGiteaRepository(),
+			"gitea_repositories":      dataSourceGiteaRepositories(),
 			"gitea_organization":      dataSourceGiteaOrganization(),
 			"gitea_organizations":     dataSourceGiteaOrganizations(),
 		},

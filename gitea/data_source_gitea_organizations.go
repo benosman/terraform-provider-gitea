@@ -62,9 +62,10 @@ func dataSourceGiteaOrganizations() *schema.Resource {
 
 func dataSourceGiteaOrganizationsRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*giteaapi.Client)
+	options := giteaapi.ListOrgsOptions{}
 	if data, ok := d.GetOk("username"); ok {
 		username := data.(string)
-		orgs, err := client.ListUserOrgs(username)
+		orgs, err := client.ListUserOrgs(username, options)
 		if err != nil {
 			return fmt.Errorf("unable to retrieve organizations for %s", username)
 		}
@@ -72,7 +73,7 @@ func dataSourceGiteaOrganizationsRead(d *schema.ResourceData, meta interface{}) 
 		d.Set("organizations", flattenGiteaOrganizations(orgs))
 		d.SetId(fmt.Sprintf("%d", orgs))
 	} else {
-		orgs, err := client.ListMyOrgs()
+		orgs, err := client.ListMyOrgs(options)
 		if err != nil {
 			return fmt.Errorf("unable to retrieve organizations for myself")
 		}

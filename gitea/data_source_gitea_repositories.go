@@ -134,7 +134,8 @@ func dataSourceGiteaRepositoriesRead(d *schema.ResourceData, meta interface{}) e
 	client := meta.(*giteaapi.Client)
 	owner := d.Get("owner").(string)
 	id := schema.HashString(owner)
-	repos, err := client.ListUserRepos(owner)
+	options := giteaapi.ListReposOptions{}
+	repos, err := client.ListUserRepos(owner, options)
 	if err != nil {
 		return fmt.Errorf("unable to retrieve repositories for %s", owner)
 	}

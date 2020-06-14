@@ -39,7 +39,6 @@ func resourceGiteaRepository() *schema.Resource {
 			"owner": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"name": {
 				Type:     schema.TypeString,
@@ -333,13 +332,16 @@ func resourceGiteaRepositoryUpdate(d *schema.ResourceData, meta interface{}) err
 
 	if d.HasChange("owner") {
 		log.Printf("[DEBUG] change owner of repository %s to %s", d.Id(), owner)
-		return fmt.Errorf("[NOT IMPLEMENTED] unable to transfer repository %s %s", owner, name)
-		///_, err := client.TransferRepo
-		//if err != nil {
-			// return err
-		//}
+		o, _ := d.GetChange("owner")
+		old := o.(string)
+		transferOptions := giteaapi.TransferRepoOption{
+			NewOwner: owner,
+		}
+		_, err := client.TransferRepo(old, name, transferOptions)
+		if err != nil {
+			 return err
+		}
 	}
-
 	log.Printf("[DEBUG] update repository %s", d.Id())
 
 	edit := resourceGiteaRepositoryEditOptions(d)

@@ -39,6 +39,42 @@ func dataSourceGiteaRepository() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
+			"has_issues": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"has_wiki": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"has_pull_requests": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"ignore_whitespace_conflicts": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"allow_merge": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"allow_rebase": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"allow_rebase_merge": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"allow_squash": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"archived": &schema.Schema{
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 			"parent_username": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -150,6 +186,15 @@ func dataSourceGiteaRepositoryRead(d *schema.ResourceData, meta interface{}) err
 	d.Set("website", repository.Website)
 	d.Set("stars", repository.Stars)
 	d.Set("forks", repository.Forks)
+	d.Set("has_issues", repository.HasIssues)
+	d.Set("has_wiki", repository.HasWiki)
+	d.Set("has_pull_requests", repository.HasPullRequests)
+	d.Set("ignore_whitespace_conflicts", repository.IgnoreWhitespaceConflicts)
+	d.Set("allow_merge", repository.AllowMerge)
+	d.Set("allow_rebase", repository.AllowRebase)
+	d.Set("allow_rebase_merge", repository.AllowRebaseMerge)
+	d.Set("allow_squash", repository.AllowSquash)
+	d.Set("archived", repository.Archived)
 	d.Set("watchers", repository.Watchers)
 	d.Set("open_issue_count", repository.OpenIssues)
 	d.Set("default_branch", repository.DefaultBranch)
